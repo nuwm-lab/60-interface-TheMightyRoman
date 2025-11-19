@@ -1,6 +1,7 @@
 using System;
+using System.Collections.Generic;
 
-namespace LabWork16
+namespace LabWork16_Refactored
 {
     // 1. Інтерфейс
     public interface IVectorSystem
@@ -16,119 +17,132 @@ namespace LabWork16
         // Конструктор
         protected VectorSystemBase()
         {
-            Console.WriteLine("-> Створено об'єкт векторної системи (Constructor)");
+            // Логіка ініціалізації (якщо потрібна)
         }
 
-        // Деструктор (вимога методички)
+        // Деструктор (вимога методички: "В класах повинні бути присутні конструктори та деструктори")
+        // В реальному C# коді деструктори використовуються рідко, тільки для Unmanaged Resources.
         ~VectorSystemBase()
         {
-            Console.WriteLine("-> Об'єкт векторної системи видалено (Destructor)");
+            // Порожній деструктор, щоб не порушувати Code Convention виводом в консоль
         }
 
-        // Абстрактні методи, які мають реалізувати нащадки
+        // Абстрактні методи
         public abstract void Input();
         public abstract void Show();
         public abstract bool IsLinearlyIndependent();
+
+        // Допоміжний метод для безпечного введення чисел (DRY - Don't Repeat Yourself)
+        protected double ReadDouble(string prompt)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                if (double.TryParse(Console.ReadLine(), out double result))
+                {
+                    return result;
+                }
+                Console.WriteLine("Помилка! Введiть коректне число.");
+            }
+        }
     }
 
-    // 3. Клас "Система двох векторів"
+    // 3. Клас "Система двох векторів" (2D)
+    // Вектори A(ax, ay), B(bx, by)
     public class TwoVectorSystem : VectorSystemBase
     {
-        // Використовуємо protected, щоб мати доступ у класі-спадкоємці
-        protected double Ax, Ay;
-        protected double Bx, By;
+        // Приватні поля (backing fields) - camelCase
+        private double _ax, _ay;
+        private double _bx, _by;
+
+        // Публічні властивості - PascalCase
+        public double Ax { get => _ax; set => _ax = value; }
+        public double Ay { get => _ay; set => _ay = value; }
+        public double Bx { get => _bx; set => _bx = value; }
+        public double By { get => _by; set => _by = value; }
 
         public TwoVectorSystem() : base() { }
 
         public override void Input()
         {
             Console.WriteLine("\n--- Введення системи 2-х векторiв (2D) ---");
-            Console.WriteLine("Введiть координати вектора A:");
-            Console.Write("ax: "); Ax = GetDouble();
-            Console.Write("ay: "); Ay = GetDouble();
+            Console.WriteLine("Вектор A:");
+            Ax = ReadDouble("ax: ");
+            Ay = ReadDouble("ay: ");
 
-            Console.WriteLine("Введiть координати вектора B:");
-            Console.Write("bx: "); Bx = GetDouble();
-            Console.Write("by: "); By = GetDouble();
+            Console.WriteLine("Вектор B:");
+            Bx = ReadDouble("bx: ");
+            By = ReadDouble("by: ");
         }
 
         public override void Show()
         {
-            Console.WriteLine("\n--- Система 2-х векторiв ---");
-            Console.WriteLine($"Вектор A = ({Ax}, {Ay})");
-            Console.WriteLine($"Вектор B = ({Bx}, {By})");
+            Console.WriteLine($"Система 2D: A({Ax}, {Ay}), B({Bx}, {By})");
         }
 
         public override bool IsLinearlyIndependent()
         {
-            // Для 2D вектори незалежні, якщо визначник матриці не дорівнює 0
-            // | ax ay |
-            // | bx by |
+            // Det = | ax ay |
+            //       | bx by |
             double det = Ax * By - Ay * Bx;
-            Console.WriteLine($"Детермінант: {det:F2}");
+            // Використовуємо мале число для порівняння double з нулем
             return Math.Abs(det) > 1e-9;
-        }
-
-        // Допоміжний метод для зчитування чисел
-        protected double GetDouble()
-        {
-            while (true)
-            {
-                if (double.TryParse(Console.ReadLine(), out double result))
-                    return result;
-                Console.Write("Помилка. Введіть число: ");
-            }
         }
     }
 
-    // 4. Похідний клас "Система трьох векторів"
+    // 4. Клас "Система трьох векторів" (3D)
+    // Успадковуємось від 2D, додаємо Z координати та вектор C
     public class ThreeVectorSystem : TwoVectorSystem
     {
-        // Додаємо Z-координати для A і B, та повний вектор C
-        private double _az, _bz;
-        private double _cx, _cy, _cz;
+        // Додаткові приватні поля
+        private double _az, _bz;       // Z-координати для A і B
+        private double _cx, _cy, _cz;  // Новий вектор C
+
+        // Властивості
+        public double Az { get => _az; set => _az = value; }
+        public double Bz { get => _bz; set => _bz = value; }
+        
+        public double Cx { get => _cx; set => _cx = value; }
+        public double Cy { get => _cy; set => _cy = value; }
+        public double Cz { get => _cz; set => _cz = value; }
 
         public ThreeVectorSystem() : base() { }
 
         public override void Input()
         {
             Console.WriteLine("\n--- Введення системи 3-х векторiв (3D) ---");
-            Console.WriteLine("Введiть координати вектора A:");
-            Console.Write("ax: "); Ax = GetDouble();
-            Console.Write("ay: "); Ay = GetDouble();
-            Console.Write("az: "); _az = GetDouble();
+            // Перевизначаємо логіку повністю, щоб зберегти порядок введення
+            Console.WriteLine("Вектор A:");
+            Ax = ReadDouble("ax: ");
+            Ay = ReadDouble("ay: ");
+            Az = ReadDouble("az: ");
 
-            Console.WriteLine("Введiть координати вектора B:");
-            Console.Write("bx: "); Bx = GetDouble();
-            Console.Write("by: "); By = GetDouble();
-            Console.Write("bz: "); _bz = GetDouble();
+            Console.WriteLine("Вектор B:");
+            Bx = ReadDouble("bx: ");
+            By = ReadDouble("by: ");
+            Bz = ReadDouble("bz: ");
 
-            Console.WriteLine("Введiть координати вектора C:");
-            Console.Write("cx: "); _cx = GetDouble();
-            Console.Write("cy: "); _cy = GetDouble();
-            Console.Write("cz: "); _cz = GetDouble();
+            Console.WriteLine("Вектор C:");
+            Cx = ReadDouble("cx: ");
+            Cy = ReadDouble("cy: ");
+            Cz = ReadDouble("cz: ");
         }
 
         public override void Show()
         {
-            Console.WriteLine("\n--- Система 3-х векторiв ---");
-            Console.WriteLine($"Вектор A = ({Ax}, {Ay}, {_az})");
-            Console.WriteLine($"Вектор B = ({Bx}, {By}, {_bz})");
-            Console.WriteLine($"Вектор C = ({_cx}, {_cy}, {_cz})");
+            Console.WriteLine($"Система 3D: A({Ax}, {Ay}, {Az}), B({Bx}, {By}, {Bz}), C({Cx}, {Cy}, {Cz})");
         }
 
         public override bool IsLinearlyIndependent()
         {
-            // Визначник матриці 3x3
-            // | ax ay az |
-            // | bx by bz |
-            // | cx cy cz |
+            // Визначник 3-го порядку (Правило Саррюса / Трикутника)
+            // | Ax Ay Az |
+            // | Bx By Bz |
+            // | Cx Cy Cz |
             
-            // Правило трикутника (Саррюса)
-            double det = Ax * By * _cz + Ay * _bz * _cx + _az * Bx * _cy
-                       - _az * By * _cx - Ay * Bx * _cz - Ax * _bz * _cy;
+            double det = Ax * By * Cz + Ay * Bz * Cx + Az * Bx * Cy 
+                       - Az * By * Cx - Ay * Bx * Cz - Ax * Bz * Cy;
 
-            Console.WriteLine($"Детермінант: {det:F2}");
             return Math.Abs(det) > 1e-9;
         }
     }
@@ -138,54 +152,37 @@ namespace LabWork16
         static void Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+            // Демонстрація поліморфізму через список (Collection)
+            // Це виконує рекомендацію "Покажіть приклад колекції"
+            List<IVectorSystem> systems = new List<IVectorSystem>();
+
+            Console.WriteLine("Створення об'єктів...");
             
-            // Поліморфізм: використовуємо інтерфейс або базовий клас як тип змінної
-            IVectorSystem vectorSystem = null;
+            // Додаємо об'єкти різних типів в один список
+            // (В реальній програмі тут міг би бути цикл із запитом до користувача)
+            systems.Add(new TwoVectorSystem());
+            systems.Add(new ThreeVectorSystem());
 
-            while (true)
+            // Проходимо по списку і працюємо з об'єктами універсально
+            foreach (var system in systems)
             {
-                Console.WriteLine("\n============================================");
-                Console.WriteLine("Оберiть тип системи векторів:");
-                Console.WriteLine("1 - Система 2-х векторiв (2D)");
-                Console.WriteLine("2 - Система 3-х векторiв (3D)");
-                Console.WriteLine("0 - Вихiд");
-                Console.Write("Ваш вибiр: ");
+                system.Input();
+                system.Show();
 
-                string choice = Console.ReadLine();
-
-                if (choice == "0") break;
-
-                switch (choice)
+                if (system.IsLinearlyIndependent())
                 {
-                    case "1":
-                        vectorSystem = new TwoVectorSystem();
-                        break;
-                    case "2":
-                        vectorSystem = new ThreeVectorSystem();
-                        break;
-                    default:
-                        Console.WriteLine("Некоректний вибір.");
-                        continue;
-                }
-
-                // Робота через інтерфейс/базовий клас
-                vectorSystem.Input();
-                vectorSystem.Show();
-
-                if (vectorSystem.IsLinearlyIndependent())
-                {
-                    Console.WriteLine("РЕЗУЛЬТАТ: Вектори ЛІНІЙНО НЕЗАЛЕЖНІ (утворюють базис).");
+                    Console.WriteLine("-> Вектори ЛІНІЙНО НЕЗАЛЕЖНІ (утворюють базис).");
                 }
                 else
                 {
-                    Console.WriteLine("РЕЗУЛЬТАТ: Вектори ЛІНІЙНО ЗАЛЕЖНІ.");
+                    Console.WriteLine("-> Вектори ЛІНІЙНО ЗАЛЕЖНІ.");
                 }
-
-                // Примусовий виклик збирача сміття для демонстрації деструкторів (не обов'язково в реальному коді)
-                vectorSystem = null;
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
+                Console.WriteLine("------------------------------------------------");
             }
+
+            Console.WriteLine("Роботу завершено. Натисніть Enter.");
+            Console.ReadLine();
         }
     }
 }
